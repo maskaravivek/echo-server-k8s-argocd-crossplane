@@ -46,8 +46,8 @@ jobs:
       #   run: |
       #     vcluster platform login https://samplecrossplaceargocdgithubpr.vcluster.cloud/ --access-key ${{ secrets.VCLUSTER_PLATFORM_ACCESS_KEY }}
 
-      # - name: Install vCluster CLI
-      #   uses: loft-sh/setup-vcluster@main
+      - name: Install vCluster CLI
+        uses: loft-sh/setup-vcluster@main
       - name: Install vCluster CLI
         uses: loft-sh/setup-loft@v2
         with:
