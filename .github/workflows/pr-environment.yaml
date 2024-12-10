@@ -58,18 +58,33 @@ jobs:
           # Optional if your vCluster Platform domain certificate is insecure
           #insecure: true
 
-      - name: Create PR preview environment
-        uses: loft-sh/create-vcluster@main
-        with:
-          name: ${REPO_NAME}-pr-${PR_NUMBER}
-          template: preview-template
-          project: default
+      # - name: Create PR preview environment
+      #   uses: loft-sh/create-vcluster@main
+      #   with:
+      #     name: ${REPO_NAME}-pr-${PR_NUMBER}
+      #     template: preview-template
+      #     project: default
+
+      # - name: Create PR preview environment
+      #   run: |
+      #     # This creates a vcluster-based ephemeral environment tied to the PR
+          
+      #     INGRESS_HOST=loft-preview-${{ github.event.pull_request.number }}-fiq5rbu.loft.host
+
+      #     helm repo add argo https://argoproj.github.io/argo-helm
+      #     helm install argocd argo/argo-cd --version 5.16.3 \
+      #         --create-namespace \
+      #         -n argocd \
+      #         --set server.ingress.enabled=true \
+      #         --set server.ingress.hosts={$INGRESS_HOST}
 
       - name: Create PR preview environment
         run: |
           # This creates a vcluster-based ephemeral environment tied to the PR
           
-          INGRESS_HOST=loft-preview-${{ github.event.pull_request.number }}-fiq5rbu.loft.host
+          INGRESS_HOST=loft-preview-${{ github.event.pull_request.number }}-samplecrossplaceargocdgithubpr.vcluster.cloud
+
+          vcluster create ${REPO_NAME}-pr-${PR_NUMBER} --project echo-server-project --recreate --template preview-template --connect --expose
 
           helm repo add argo https://argoproj.github.io/argo-helm
           helm install argocd argo/argo-cd --version 5.16.3 \
