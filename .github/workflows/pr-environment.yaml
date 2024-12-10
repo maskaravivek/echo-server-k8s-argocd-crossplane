@@ -82,7 +82,7 @@ jobs:
         run: |
           # This creates a vcluster-based ephemeral environment tied to the PR
           
-          INGRESS_HOST=loft-preview-${{ github.event.pull_request.number }}-samplecrossplaceargocdgithubpr.vcluster.cloud
+          INGRESS_HOST=loft-preview-${{ github.event.pull_request.number }}-fiq5rbu.loft.host
 
           vcluster create ${REPO_NAME}-pr-${PR_NUMBER} --project default --recreate --template preview-template --connect --expose
 
