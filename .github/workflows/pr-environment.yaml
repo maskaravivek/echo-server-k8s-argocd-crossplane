@@ -51,7 +51,7 @@ jobs:
       - name: Install vCluster CLI
         uses: loft-sh/setup-loft@v2
         with:
-          version: v3.2.4
+          version: v3.0.0
           url: https://fiq5rbu.loft.host
           # Specify your vCluster Platform access key here
           access-key: ${{ secrets.VCLUSTER_PLATFORM_ACCESS_KEY }}
