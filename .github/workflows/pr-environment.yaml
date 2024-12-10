@@ -23,15 +23,25 @@ jobs:
         with:
           ref: ${{ github.head_ref }}
 
-      - id: install-loft-cli
+      - name: Install vCluster CLI
         uses: loft-sh/setup-loft@v2
         with:
-          version: v3.3.3
+          version: v3.2.4
           url: https://samplecrossplaceargocdgithubpr.vcluster.cloud
           # Specify your vCluster Platform access key here
           access-key: ${{ secrets.VCLUSTER_PLATFORM_ACCESS_KEY }}
-          kubectl-install: false
-          kubectl-version: v1.28.2
+          # Optional if your vCluster Platform domain certificate is insecure
+          #insecure: true
+
+      # - id: install-loft-cli
+      #   uses: loft-sh/setup-loft@v2
+      #   with:
+      #     version: v3.3.3
+      #     url: https://samplecrossplaceargocdgithubpr.vcluster.cloud
+      #     # Specify your vCluster Platform access key here
+      #     access-key: ${{ secrets.VCLUSTER_PLATFORM_ACCESS_KEY }}
+      #     kubectl-install: false
+      #     kubectl-version: v1.28.2
 
       - id: create-preview-vcluster
         run: |
