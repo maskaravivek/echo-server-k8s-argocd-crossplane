@@ -62,8 +62,6 @@ jobs:
         uses: loft-sh/create-vcluster@main
         with:
           name: ${REPO_NAME}-pr-${PR_NUMBER}
-          cluster: my-eks-cluster-2
-          project: echo-server-project
           template: preview-template
 
       - name: Create PR preview environment
