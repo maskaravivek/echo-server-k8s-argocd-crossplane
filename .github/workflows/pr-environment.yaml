@@ -12,7 +12,7 @@ env:
 
 jobs:
   create-preview-env:
-    if: ${{ github.event.label.name == 'preview' }}
+    # if: ${{ github.event.label.name == 'preview' }}
     runs-on: ubuntu-22.04
     permissions:
       id-token: write
