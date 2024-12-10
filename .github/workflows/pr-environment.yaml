@@ -63,6 +63,7 @@ jobs:
         with:
           name: ${REPO_NAME}-pr-${PR_NUMBER}
           template: preview-template
+          project: default
 
       - name: Create PR preview environment
         run: |
