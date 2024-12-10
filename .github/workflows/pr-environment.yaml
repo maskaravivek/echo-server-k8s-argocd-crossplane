@@ -84,7 +84,7 @@ jobs:
           
           INGRESS_HOST=loft-preview-${{ github.event.pull_request.number }}-samplecrossplaceargocdgithubpr.vcluster.cloud
 
-          vcluster create ${REPO_NAME}-pr-${PR_NUMBER} --project echo-server-project --recreate --template preview-template --connect --expose
+          vcluster create ${REPO_NAME}-pr-${PR_NUMBER} --project default --recreate --template preview-template --connect --expose
 
           helm repo add argo https://argoproj.github.io/argo-helm
           helm install argocd argo/argo-cd --version 5.16.3 \
