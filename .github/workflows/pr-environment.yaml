@@ -2,7 +2,7 @@ name: PR Environment Management
 
 on:
   pull_request:
-    types: [labeled]
+    types: [opened, reopened, synchronize, closed]
     branches:
       - main
 
@@ -59,12 +59,18 @@ jobs:
           #insecure: true
 
       - name: Create PR preview environment
+        uses: loft-sh/create-vcluster@main
+        with:
+          name: ${REPO_NAME}-pr-${PR_NUMBER}
+          cluster: my-eks-cluster-2
+          project: echo-server-project
+          template: preview-template
+
+      - name: Create PR preview environment
         run: |
           # This creates a vcluster-based ephemeral environment tied to the PR
           
           INGRESS_HOST=loft-preview-${{ github.event.pull_request.number }}-samplecrossplaceargocdgithubpr.vcluster.cloud
-
-          vcluster create ${REPO_NAME}-pr-${PR_NUMBER} --project echo-server-project --recreate --template preview-template --connect --expose
 
           helm repo add argo https://argoproj.github.io/argo-helm
           helm install argocd argo/argo-cd --version 5.16.3 \
