@@ -24,9 +24,8 @@ jobs:
           ref: ${{ github.head_ref }}
 
       - name: Install vCluster CLI
-        uses: loft-sh/setup-loft@v2
+        uses: loft-sh/setup-loft@main
         with:
-          version: v3.2.4
           url: https://samplecrossplaceargocdgithubpr.vcluster.cloud
           # Specify your vCluster Platform access key here
           access-key: ${{ secrets.VCLUSTER_PLATFORM_ACCESS_KEY }}
