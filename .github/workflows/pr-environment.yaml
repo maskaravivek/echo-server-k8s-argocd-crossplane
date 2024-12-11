@@ -92,6 +92,7 @@ jobs:
         with:
           name: pr-${{ github.sha }}
           project: default
+          template: preview-template
 
       # - name: Set up Kubernetes tools
       #   run: |
