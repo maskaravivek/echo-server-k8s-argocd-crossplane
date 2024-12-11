@@ -91,6 +91,7 @@ jobs:
         uses: loft-sh/create-vcluster@main
         with:
           name: pr-${{ github.sha }}
+          project: default
 
       # - name: Set up Kubernetes tools
       #   run: |
