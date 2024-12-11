@@ -10,13 +10,87 @@ env:
   REPO_NAME: ${{ github.event.repository.name }}
   PR_NUMBER: ${{ github.event.pull_request.number }}
   PR_LINK: ${{ github.server_url }}/${{ github.repository }}/pull/${{ github.event.pull_request.number }}
+  REGISTRY: ghcr.io
+  # github.repository as <account>/<repo>
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
+  build-push-app:
+    runs-on: ubuntu-22.04
+    permissions:
+      packages: write
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.head_ref }}
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          labels: |
+            org.opencontainers.image.revision=${{ github.event.pull_request.head.sha }}
+            org.opencontainers.image.title=${{ github.event.repository.name }}
+            org.opencontainers.image.vendor=loft.sh
+            org.opencontainers.image.source=${{ github.repositoryUrl }}
+            org.opencontainers.image.description=Simple echo app based on the HashiCorp echo-http.
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      - name: Login to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: ghcr.io
+      - name: Add SHORT_SHA env property with commit short sha
+        run: echo "SHORT_SHA=`echo ${{ github.event.pull_request.head.sha }} | cut -c1-8`" >> $GITHUB_ENV
+      - name: Build and push
+        uses: docker/build-push-action@v3
+        with:
+          context: ./src
+          platforms: linux/amd64
+          push: true
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache,mode=max
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.SHORT_SHA }}
+          labels: ${{ steps.meta.outputs.labels }}
   manage-environment:
+    needs: build-push-app
     runs-on: ubuntu-latest
     steps:
       - name: Check out code
         uses: actions/checkout@v2
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-west-2
+
+      - name: Authenticate to Kubernetes cluster
+        run: |
+          aws eks --region us-west-2 update-kubeconfig --name ${{ secrets.EKS_CLUSTER_NAME }}
+
+      - name: Install vCluster CLI
+        uses: loft-sh/setup-vcluster@main
+
+      - name: Login to vCluster Platform instance
+        env:
+          LOFT_URL: ${{ secrets.LOFT_URL }}
+          ACCESS_KEY: ${{ secrets.VCLUSTER_PLATFORM_ACCESS_KEY }}
+        run: vcluster login $LOFT_URL --access-key $ACCESS_KEY
+
+      - name: Create Virtual Cluster for PR
+        uses: loft-sh/create-vcluster@main
+        with:
+          name: pr-${{ github.sha }}
 
       # - name: Set up Kubernetes tools
       #   run: |
@@ -30,33 +104,22 @@ jobs:
       #     chmod +x vcluster-bin
       #     sudo mv vcluster-bin /usr/local/bin/vcluster
 
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-west-2
-
-      - name: Authenticate to Kubernetes cluster
-        run: |
-          aws eks --region us-west-2 update-kubeconfig --name ${{ secrets.EKS_CLUSTER_NAME }}
-      
       # - name: Authenticate to vcluster platform
       #   # Use your own credentials or secrets; this is just an example
       #   run: |
       #     vcluster platform login https://samplecrossplaceargocdgithubpr.vcluster.cloud/ --access-key ${{ secrets.VCLUSTER_PLATFORM_ACCESS_KEY }}
 
-      - name: Install vCluster CLI
-        uses: loft-sh/setup-vcluster@main
-      - name: Install vCluster CLI
-        uses: loft-sh/setup-loft@v2
-        with:
-          version: v3.0.0
-          url: https://fiq5rbu.loft.host
-          # Specify your vCluster Platform access key here
-          access-key: ${{ secrets.VCLUSTER_PLATFORM_ACCESS_KEY }}
-          # Optional if your vCluster Platform domain certificate is insecure
-          #insecure: true
+      # - name: Install vCluster CLI
+      #   uses: loft-sh/setup-vcluster@main
+      # - name: Install vCluster CLI
+      #   uses: loft-sh/setup-loft@v2
+      #   with:
+      #     version: v3.0.0
+      #     url: https://fiq5rbu.loft.host
+      #     # Specify your vCluster Platform access key here
+      #     access-key: ${{ secrets.VCLUSTER_PLATFORM_ACCESS_KEY }}
+      #     # Optional if your vCluster Platform domain certificate is insecure
+      #     #insecure: true
 
       # - name: Create PR preview environment
       #   uses: loft-sh/create-vcluster@main
@@ -78,20 +141,20 @@ jobs:
       #         --set server.ingress.enabled=true \
       #         --set server.ingress.hosts={$INGRESS_HOST}
 
-      - name: Create PR preview environment
-        run: |
-          # This creates a vcluster-based ephemeral environment tied to the PR
+      # - name: Create PR preview environment
+      #   run: |
+      #     # This creates a vcluster-based ephemeral environment tied to the PR
           
-          INGRESS_HOST=loft-preview-${{ github.event.pull_request.number }}-fiq5rbu.loft.host
+      #     INGRESS_HOST=loft-preview-${{ github.event.pull_request.number }}-fiq5rbu.loft.host
 
-          vcluster create ${REPO_NAME}-pr-${PR_NUMBER} --project default --recreate --template preview-template --connect --expose
+      #     vcluster create ${REPO_NAME}-pr-${PR_NUMBER} --project default --recreate --template preview-template --connect --expose
 
-          helm repo add argo https://argoproj.github.io/argo-helm
-          helm install argocd argo/argo-cd --version 5.16.3 \
-              --create-namespace \
-              -n argocd \
-              --set server.ingress.enabled=true \
-              --set server.ingress.hosts={$INGRESS_HOST}
+      #     helm repo add argo https://argoproj.github.io/argo-helm
+      #     helm install argocd argo/argo-cd --version 5.16.3 \
+      #         --create-namespace \
+      #         -n argocd \
+      #         --set server.ingress.enabled=true \
+      #         --set server.ingress.hosts={$INGRESS_HOST}
 
       # - name: Create or Delete vCluster
       #   env:

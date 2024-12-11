@@ -1,1 +1,1 @@
-eksctl create cluster --name my-eks-cluster-2 --version 1.31 --region us-west-2 --nodegroup-name standard-workers --node-type t3.medium --nodes 3 --nodes-min 1 --nodes-max 5 --managed
+eksctl create cluster --name my-eks-cluster-3 --version 1.31 --region us-west-2 --nodegroup-name standard-workers --node-type t3.medium --nodes 3 --nodes-min 1 --nodes-max 5 --managed
